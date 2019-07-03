@@ -1,0 +1,7 @@
+---
+# vars file for /etc/ansible/roles/slapd
+ldap_domain: example
+ldap_domain_ext: net
+ldap_suffix: "dc={{ldap_domain}},dc={{ldap_domain_ext}}"
+ldap_admin_dn: "cn=manager,{{ldap_suffix}}"
+ldap_admin_password: "123Soleil"

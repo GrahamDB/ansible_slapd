@@ -1,0 +1,11 @@
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcsuffix
+olcsuffix: {{ ldap_suffix }}
+-
+replace: olcrootdn
+olcrootdn: {{ ldap_admin_dn }}
+-
+replace: olcrootpw
+olcrootpw: {{ ldap_admin_password }}
+
