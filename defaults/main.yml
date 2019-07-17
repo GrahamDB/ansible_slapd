@@ -4,3 +4,6 @@ ldap_domain: example
 ldap_domain_ext: fr
 ldap_suffix: "{{ ldap_domain }},{{ ldap_domain_ext }}"
 ldap_root_dn: cn=root,{{ ldap_suffix }}
+import_data: false
+ldap_schemas:
+ - cosine

@@ -25,14 +25,11 @@
     olcRootDN: "{{ ldap_admin_dn }}"
     olcRootPW: "{{ ldap_admin_password }}"
 
-- name: check if schema cosine is loaded
-  stat:
-    path: /etc/openldap/slapd.d/cn=config/cn=schema/cn={1}cosine.ldif
-  register: result
-
-- name: import mandatory schema
-  command: "ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif"
-  when: result.stat.exists==False
+- name: load additionnal schema
+  include_tasks: import_ldap_schema.yml
+  loop: "{{ ldap_schemas }}"
+  loop_control:
+    loop_var: schema
 
 - name: create suffix
   ldap_entry:
@@ -55,3 +52,30 @@
     dest: /root/.ldap.secrets
     mode: 0600
     content: "{{ ldap_admin_password }}"
+
+- name: import data
+  block:
+  - name:  create initial directory
+    file:
+      path: /root/Ldif
+      state: directory
+      mode: 0700
+
+  - name: send ldif files
+    template:
+      src: "{{ item }}"
+      dest: /root/Ldif/
+      mode: 0600
+    with_fileglob: "templates/[0-9]*.ldif"
+
+  - name: get list of ldif files
+    find:
+      paths: /root/Ldif
+      patterns: "*.ldif"
+      file_type: file
+    register: ldif_list
+
+  - name: import ldif files
+    command: "ldapadd -y /root/.ldap.secrets -xD {{ ldap_admin_dn }} -f {{ item .path}}"
+    with_items: "{{ ldif_list.files }}"
+  when: import_data == true
