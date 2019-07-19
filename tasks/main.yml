@@ -1,5 +1,6 @@
 ---
 # tasks file for /etc/ansible/roles/slapd
+
 - name: OS specific vars
   include_vars: "{{ ansible_distribution }}.yml"
 
@@ -7,6 +8,12 @@
   package:
     name: "{{ ldap_packages }}"
     state: present
+
+- name: configure client
+  template:
+    src: ldap.conf
+    dest: /etc/openldap/ldap.conf
+    mode: 0644
 
 - name: activate service
   service:
@@ -41,12 +48,6 @@
     attributes:
       dc: "{{ ldap_domain }}"
 
-- name: configure client
-  template:
-    src: ldap.conf
-    dest: /etc/openldap/ldap.conf
-    mode: 0644
-
 - name: create passwd file
   copy:
     dest: /root/.ldap.secrets
@@ -79,3 +80,47 @@
     command: "ldapadd -y /root/.ldap.secrets -xD {{ ldap_admin_dn }} -f {{ item .path}}"
     with_items: "{{ ldif_list.files }}"
   when: import_data == true
+
+- name: configure replication provider
+  include_tasks: replication_provider.yml
+  when: ldap_replication_provider
+
+- name: configure replication consumer
+  include_tasks: replication_consumer.yml
+  when: ldap_replication_consumer
+
+- name: open firewall
+  firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop:
+     - ldap
+     - ldaps
+
+# cannot use ldap_entry module because attr olcTLS* don't have equality matching
+# rules ...
+# instead send ldif and process ...
+
+- name: configure ssl
+  tags: ssl
+  block:
+  - name: ensure certificate and key files have correct permissions
+    file:
+      path: "{{ item }}"
+      group: ldap
+      mode: 0640
+    loop:
+    - "{{ ldap_ssl_cert_path }}"
+    - "{{ ldap_ssl_key_path }}"
+    - "{{ ldap_ssl_cacert_path }}"
+  - name: send ldif file
+    template:
+      src: ssl.ldif
+      dest: /root/Ldif/
+
+  - name: import ldif
+    command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/Ldif/ssl.ldif
+  when: ldap_have_ssl
+

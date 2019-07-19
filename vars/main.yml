@@ -5,3 +5,6 @@ ldap_domain_ext: net
 ldap_suffix: "dc={{ldap_domain}},dc={{ldap_domain_ext}}"
 ldap_admin_dn: "cn=manager,{{ldap_suffix}}"
 ldap_admin_password: "123Soleil"
+ldap_auth:
+  bind_dn: "{{ ldap_admin_dn }}"
+  bind_pw: "{{ ldap_admin_password }}"
