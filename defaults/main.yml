@@ -4,7 +4,6 @@ ldap_domain: example
 ldap_domain_ext: fr
 ldap_provider_uri: "{{ ansible_fqdn }}"
 ldap_suffix: "{{ ldap_domain }},{{ ldap_domain_ext }}"
-ldap_root_dn: cn=root,{{ ldap_suffix }}
 import_data: false
 ldap_schemas:
  - cosine
@@ -13,4 +12,8 @@ ldap_ssl_dir: /etc/openldap/certs
 ldap_ssl_cert_path: "{{ ldap_ssl_dir }}/{{ ansible_fqdn }}_fullchain.pem"
 ldap_ssl_key_path: "{{ ldap_ssl_dir }}/{{ ansible_fqdn }}_privkey.pem"
 ldap_ssl_cacert_path: "{{ ldap_ssl_dir }}/{{ ansible_fqdn }}_fullchain.pem"
-
+ldap_admin_dn: "cn=manager,{{ldap_suffix}}"
+ldap_admin_password: "CHANGEME"
+ldap_auth:
+  bind_dn: "{{ ldap_admin_dn }}"
+  bind_pw: "{{ ldap_admin_password }}"
