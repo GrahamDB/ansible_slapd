@@ -62,24 +62,26 @@
       state: directory
       mode: 0700
 
-  - name: send ldif files
-    template:
-      src: "{{ item }}"
-      dest: /root/Ldif/
-      mode: 0600
-    with_fileglob: "templates/[0-9]*.ldif"
+  block:
+    - name: send ldif files
+      template:
+        src: "{{ item }}"
+        dest: /root/Ldif/
+        mode: 0600
+      loop: "{{ ldap_ldif_files }}"
 
-  - name: get list of ldif files
-    find:
-      paths: /root/Ldif
-      patterns: "*.ldif"
-      file_type: file
-    register: ldif_list
+    - name: get list of ldif files
+      find:
+        paths: /root/Ldif
+        patterns: "*.ldif"
+        file_type: file
+      register: ldif_list
 
-  - name: import ldif files
-    command: "ldapadd -y /root/.ldap.secrets -xD {{ ldap_admin_dn }} -f {{ item .path}}"
-    with_items: "{{ ldif_list.files }}"
-  when: import_data == true
+    - name: import ldif files
+      command: "ldapadd -y -c /root/.ldap.secrets -xD {{ ldap_admin_dn }} -f {{ item .path}}"
+      with_items: "{{ ldif_list.files }}"
+      ignore_errors: true
+  when: ldap_ldif_files is defined
 
 - name: configure replication provider
   include_tasks: replication_provider.yml
@@ -118,9 +120,14 @@
   - name: send ldif file
     template:
       src: ssl.ldif
-      dest: /root/Ldif/
+      dest: /root/
 
   - name: import ldif
-    command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/Ldif/ssl.ldif
+    command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/ssl.ldif
+
+  - name: remove ldif
+    file:
+      path: /root/ssl.ldif
+      state: absent
   when: ldap_have_ssl
 

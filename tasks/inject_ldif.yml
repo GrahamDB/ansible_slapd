@@ -1,0 +1,9 @@
+- name: copy ldif files
+  copy:
+    src: "{{ ldap_ldif_dir }}/{{ ldif }}"
+    dest: "/root/Ldif/{{ ldif }}"
+
+- name: import additional schemas
+  command: "ldapadd -s /root/.ldap.secret -D {{ ldap_admin_dn }} -x /root/Ldif/{{ ldif }} -c"
+  ignore_error: true
+

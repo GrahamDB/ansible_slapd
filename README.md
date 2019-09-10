@@ -33,6 +33,8 @@ defined in vars/main.yml and vars/CentOS.yml
   * ldap_ssl_cert_path - {{ ldap_ssl_dir }}/{{ ansible_fqdn }}_fullchain.pem
   * ldap_ssl_cacert_path - {{ ldap_ssl_dir }}/{{ ansible_fqdn }}_fullchain.pem
   * ldap_ssl_key_path - {{ ldap_ssl_dir }}/{{ ansible_fqdn }}_privkey.pem
+  * ldap_ldif_files - optional list of ldif files to send to server and inject.
+    Will be templated. need absolute path
 
 
 Dependencies
