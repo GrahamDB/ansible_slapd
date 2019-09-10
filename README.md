@@ -47,17 +47,26 @@ Example Playbook
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-      - hosts: servers
-      roles:
-         - role: slapd
-           vars:
-              ldap_domain: example
-              ldap_domain_ex: net
-              import_data: true
-              ldap_schemas:
-              - cosine
-              - nis
-              - inetorgperson
+  - role: slapd
+    vars:
+    - ldap_schemas:
+      - cosine
+      - nis
+      - inetorgperson
+    - ldap_replication_consumer: false
+    - ldap_domain: opendoor
+    - ldap_domain_ex: fr
+    - ldap_suffix: o=od
+    - ldap_admin_password: 123Soleil
+    - ldap_replication_provider: false
+    - ldap_have_ssl: yes
+    - ldap_ssl_dir: /etc/openldap/certs/
+    - ldap_ssl_cert_path: "{{ ssl_certificate_file }}"
+    - ldap_ssl_key_path: "{{ ssl_key_file }}"
+    - ldap_ssl_cacert_path: "{{ ssl_ca_file }}"
+    - ldap_ldif_files:
+      - /home/tom/tmp/cyrus_postfix_ldap/Vagrant/0_branches.ldif
+      - /home/tom/tmp/cyrus_postfix_ldap/Vagrant/1_users.ldif
 
 License
 -------
