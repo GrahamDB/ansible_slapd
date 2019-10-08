@@ -17,6 +17,7 @@ defined in vars/main.yml and vars/CentOS.yml
   * ldap_suffix      - constructed from variables above example.net
   * ldap_admin_dn    - cn=manager,{{ ldap_suffix }}
   * ldap_admin_password - 123Soleil - should be in a vault ...)
+  * ldap_secret_file - default to /root/.ldap.secret
   * ldap_packages    - liste of packages - should be the only thing to change to
     adapt to other distro
   * ldap_service     - name of service unit file - slapd

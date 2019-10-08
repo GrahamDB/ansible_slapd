@@ -2,6 +2,7 @@
 # defaults file for /etc/ansible/roles/slapd
 ldap_domain: example
 ldap_domain_ext: fr
+ldap_secret_file: /root/.ldap.secret
 ldap_provider_uri: "{{ ansible_fqdn }}"
 ldap_suffix: "{{ ldap_domain }},{{ ldap_domain_ext }}"
 import_data: false

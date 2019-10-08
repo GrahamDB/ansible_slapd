@@ -32,6 +32,17 @@
     olcRootDN: "{{ ldap_admin_dn }}"
     olcRootPW: "{{ ldap_admin_password }}"
 
+- name: reconfigure slapd - access to cn=config
+  ldap_attr:
+    dn: olcDatabase={0}config,cn=config
+    name: olcAccess
+    values:
+      >-
+      to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage
+      by dn.base={{ ldap_admin_dn }}  manage
+      by * none
+    state: exact
+
 - name: load additionnal schema
   include_tasks: import_ldap_schema.yml
   loop: "{{ ldap_schemas }}"
@@ -50,7 +61,7 @@
 
 - name: create passwd file
   copy:
-    dest: /root/.ldap.secrets
+    dest: "{{ ldap_secret_file }}"
     mode: 0600
     content: "{{ ldap_admin_password }}"
 
@@ -78,10 +89,11 @@
       register: ldif_list
 
     - name: import ldif files
-      command: "ldapadd -y -c /root/.ldap.secrets -xD {{ ldap_admin_dn }} -f {{ item .path}}"
+      command: "ldapadd -c -y /root/.ldap.secret -xD {{ ldap_admin_dn }} -f {{ item .path}}"
       with_items: "{{ ldif_list.files }}"
       ignore_errors: true
   when: ldap_ldif_files is defined
+  tags: wip
 
 - name: configure replication provider
   include_tasks: replication_provider.yml
@@ -117,17 +129,31 @@
     - "{{ ldap_ssl_cert_path }}"
     - "{{ ldap_ssl_key_path }}"
     - "{{ ldap_ssl_cacert_path }}"
-  - name: send ldif file
-    template:
-      src: ssl.ldif
-      dest: /root/
 
-  - name: import ldif
-    command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/ssl.ldif
+- name: send ldif file
+  template:
+    src: ssl.ldif
+    dest: /root/
 
-  - name: remove ldif
-    file:
-      path: /root/ssl.ldif
-      state: absent
+- name: import ldif
+  command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/ssl.ldif
+
+- name: configure url
+  lineinfile:
+    path: /etc/sysconfig/slapd
+    regexp: '^SLAPD_URLS="ldapi:/// ldap:///"'
+    line: 'SLAPD_URLS="ldapi:/// ldap:/// ldaps:///"'
+    state: present
+  notify: restart_slapd
+
+- name: remove ldif
+  file:
+    path: /root/ssl.ldif
+    state: absent
   when: ldap_have_ssl
 
+- name: configure ldap aliases
+  tags: shell
+  template:
+    src: ldap_aliases.sh
+    dest: /etc/profile.d/
