@@ -1,8 +1,0 @@
-dn: ou=users,{{ldap_suffix}}
-objectclass: organizationalUnit
-
-dn: ou=groups,{{ldap_suffix}}
-objectclass: organizationalUnit
-
-dn: ou=hosts,{{ldap_suffix}}
-objectclass: organizationalUnit

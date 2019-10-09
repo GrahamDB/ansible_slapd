@@ -22,7 +22,6 @@ defined in vars/main.yml and vars/CentOS.yml
     adapt to other distro
   * ldap_service     - name of service unit file - slapd
   * ldap_user        - slapd service account
-  * import_data      - bool - control wether we import initial data from LDIF files you will have put in templates subdirectory. Default No
   * ldap_schemas     - list of additionnal schema names to load - default cosine
   * ldap_replication_consumer - bool -true to setup a replication consumer
   * ldap_replication_provider - bool -true to setup a replication provider
