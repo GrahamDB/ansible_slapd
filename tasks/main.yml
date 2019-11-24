@@ -122,36 +122,27 @@
 - name: configure ssl
   tags: ssl
   block:
-  - name: ensure certificate and key files have correct permissions
+
+  - name: send ldif file
+    template:
+      src: ssl.ldif
+      dest: /root/
+
+  - name: import ldif
+    command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/ssl.ldif
+
+  - name: configure url
+    lineinfile:
+      path: /etc/sysconfig/slapd
+      regexp: '^SLAPD_URLS="ldapi:/// ldap:///"'
+      line: 'SLAPD_URLS="ldapi:/// ldap:/// ldaps:///"'
+      state: present
+    notify: restart_slapd
+
+  - name: remove ldif
     file:
-      path: "{{ item }}"
-      group: ldap
-      mode: 0640
-    loop:
-    - "{{ ldap_ssl_cert_path }}"
-    - "{{ ldap_ssl_key_path }}"
-    - "{{ ldap_ssl_cacert_path }}"
-
-- name: send ldif file
-  template:
-    src: ssl.ldif
-    dest: /root/
-
-- name: import ldif
-  command: ldapmodify  -c -Y EXTERNAL -H ldapi:/// -f /root/ssl.ldif
-
-- name: configure url
-  lineinfile:
-    path: /etc/sysconfig/slapd
-    regexp: '^SLAPD_URLS="ldapi:/// ldap:///"'
-    line: 'SLAPD_URLS="ldapi:/// ldap:/// ldaps:///"'
-    state: present
-  notify: restart_slapd
-
-- name: remove ldif
-  file:
-    path: /root/ssl.ldif
-    state: absent
+      path: /root/ssl.ldif
+      state: absent
   when: ldap_have_ssl
 
 - name: configure ldap aliases
