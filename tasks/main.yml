@@ -21,7 +21,7 @@
     state: started
     enabled: yes
 
-- name: reconfigure slapd
+- name: configure main database - admin, suffix and cache
   ldap_attr:
     dn: olcDatabase={2}hdb,cn=config
     name: "{{ item.key }}"
@@ -31,6 +31,9 @@
     olcSuffix: "{{ ldap_suffix }}"
     olcRootDN: "{{ ldap_admin_dn }}"
     olcRootPW: "{{ ldap_admin_password }}"
+    olcDbCheckpoint: "1024 30"
+    olcDbCacheSize: 3000
+    olcDbIDLCacheSize: 9000
 
 - name: reconfigure slapd - access to cn=config and cn=monitor
   ldap_attr:
@@ -76,7 +79,6 @@
       state: directory
       mode: 0700
 
-  block:
     - name: send ldif files
       template:
         src: "{{ item }}"
