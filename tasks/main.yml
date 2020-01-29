@@ -34,6 +34,7 @@
     olcDbCheckpoint: "1024 30"
     olcDbCacheSize: 3000
     olcDbIDLCacheSize: 9000
+  ignore_errors: true
 
 - name: reconfigure slapd - access to cn=config and cn=monitor
   ldap_attr:
@@ -79,24 +80,24 @@
       state: directory
       mode: 0700
 
-    - name: send ldif files
-      template:
-        src: "{{ item }}"
-        dest: /root/Ldif/
-        mode: 0600
-      loop: "{{ ldap_ldif_files }}"
+  - name: send ldif files
+    template:
+      src: "{{ item }}"
+      dest: /root/Ldif/
+      mode: 0600
+    loop: "{{ ldap_ldif_files }}"
 
-    - name: get list of ldif files
-      find:
-        paths: /root/Ldif
-        patterns: "*.ldif"
-        file_type: file
-      register: ldif_list
+  - name: get list of ldif files
+    find:
+      paths: /root/Ldif
+      patterns: "*.ldif"
+      file_type: file
+    register: ldif_list
 
-    - name: import ldif files
-      command: "ldapadd -c -y /root/.ldap.secret -xD {{ ldap_admin_dn }} -f {{ item .path}}"
-      with_items: "{{ ldif_list.files }}"
-      ignore_errors: true
+  - name: import ldif files
+    command: "ldapadd -c -y {{ ldap_secret_file }} -xD {{ ldap_admin_dn }} -f {{ item .path}}"
+    with_items: "{{ ldif_list.files }}"
+    ignore_errors: true
   when: ldap_ldif_files is defined
 
 - name: configure replication provider
