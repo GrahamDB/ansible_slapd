@@ -3,6 +3,21 @@ Role Name
 
 install openldap servers on CentOS - should work on RH too
 
+TODO
+----
+
+make it work on CentOS8:
+difier form_slapd/vars/CentOS.yml : 
+ldap_packages:
+  - symas-openldap-servers
+  - symas-openldap-clients
+  - python3-ldap.x86_64
+ldap_service: slapd
+ldap_user: ldap
+
+dans form_slapd/templates/change_suffix_and_dit_admin.ldif remplacer hdb par mdb ligne 1
+
+dans form_slapd/tasks/main.yml remplacer hdb par mdb ligne 26
 Requirements
 ------------
 
@@ -30,6 +45,9 @@ defined in vars/main.yml and vars/CentOS.yml
   - ldap_replication_provider_uri - ldap uri of provider server
   * ldap_have_ssl    - boolean - wether we use ssl or not
   * ldap_ssl_dir     - directory where certificates will be stored
+  * ldap_cache_size: 3000
+  * ldap_idlcache_size: 60001024 30
+  * ldap_checkpoint: 1024 30
   * ldap_ssl_cert_path - {{ ldap_ssl_dir }}/{{ ansible_fqdn }}_fullchain.pem
   * ldap_ssl_cacert_path - {{ ldap_ssl_dir }}/{{ ansible_fqdn }}_fullchain.pem
   * ldap_ssl_key_path - {{ ldap_ssl_dir }}/{{ ansible_fqdn }}_privkey.pem

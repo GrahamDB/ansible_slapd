@@ -4,6 +4,17 @@
 - name: OS specific vars
   include_vars: "{{ ansible_distribution }}.yml"
 
+- name: CentOS8 stuff
+  block:
+  - name: CentOS 8 specific vars
+    include_vars: CentOS8.yml
+
+  - name: configure Symas repo for CentOS8
+    get_url:
+      url:  https://repo.symas.com/configs/SOFL/rhel8/sofl.repo
+      dest: /etc/yum.repos.d/sofl.repo
+  when: ansible_distribution_major_version == 8 and ansible_distribution =='CentOS'
+
 - name: install
   package:
     name: "{{ ldap_packages }}"
@@ -21,20 +32,55 @@
     state: started
     enabled: yes
 
-- name: configure main database - admin, suffix and cache
-  ldap_attr:
-    dn: olcDatabase={2}hdb,cn=config
-    name: "{{ item.key }}"
-    values: "{{ item.value }}"
-    state: exact
-  with_dict:
-    olcSuffix: "{{ ldap_suffix }}"
-    olcRootDN: "{{ ldap_admin_dn }}"
-    olcRootPW: "{{ ldap_admin_password }}"
-    olcDbCheckpoint: "1024 30"
-    olcDbCacheSize: 3000
-    olcDbIDLCacheSize: 9000
-  ignore_errors: true
+- name: configure main database - admin, suffix, cache, acl
+  block:
+  - name: remove existing acl
+    ldap_attr:
+      dn: olcDatabase={2}hdb,cn=config
+      name: olcaccess
+      values: []
+      state: exact
+
+  - name: admin, suffix and cache
+    ldap_attr:
+      dn: olcDatabase={2}hdb,cn=config
+      name: "{{ item.key }}"
+      values: "{{ item.value }}"
+      state: exact
+    with_dict:
+      olcSuffix: "{{ ldap_suffix }}"
+      olcRootDN: "{{ ldap_admin_dn }}"
+      olcRootPW: "{{ ldap_admin_password }}"
+      olcDbCheckpoint: "{{ ldap_checkpoint }}"
+      olcDbCacheSize: "{{ ldap_cache_size }}"
+      olcDbIDLCacheSize: "{{ ldap_idlcache_size }}"
+      olcAccess:
+        - >-
+          {0}to attrs=userPassword,mail
+          by self write
+          by anonymous auth
+          by * none
+        - >-
+          {1}to dn.sub={{ ldap_suffix }}
+          by users read
+          by * none
+    ignore_errors: true
+
+  - name: remove existing indexes
+    ldap_attr:
+      dn: olcDatabase={2}hdb,cn=config
+      values: []
+      name: olcDbIndex
+      state: exact
+
+  - name: add indexes
+    ldap_attr:
+      dn: olcDatabase={2}hdb,cn=config
+      name: "olcDbIndex"
+      values: "{{ item }}"
+    loop:
+      - objectClass pres,eq
+      - uid,mail eq
 
 - name: reconfigure slapd - access to cn=config and cn=monitor
   ldap_attr:
@@ -107,16 +153,6 @@
 - name: configure replication consumer
   include_tasks: replication_consumer.yml
   when: ldap_replication_consumer
-
-- name: open firewall
-  firewalld:
-    service: "{{ item }}"
-    permanent: yes
-    immediate: yes
-    state: enabled
-  loop:
-     - ldap
-     - ldaps
 
 # cannot use ldap_entry module because attr olcTLS* don't have equality matching
 # rules ...
