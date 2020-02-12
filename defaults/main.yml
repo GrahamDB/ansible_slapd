@@ -24,3 +24,48 @@ ldap_auth:
 ldap_cache_size: 3000
 ldap_idlcache_size: 6000
 ldap_checkpoint: 1024 30
+ldap_entries:
+  - dn: cn=module,cn=config
+    objectClass: olcModuleList
+    attributes:
+      cn: module
+      olcModulePath: /usr/lib64/openldap/
+      olcModuleLoad: auditlog.la
+
+  - dn: olcOverlay={0}auditlog,olcDatabase={2}hdb,cn=config
+    objectClass: 
+      - olcOverlayConfig
+      - olcAuditLogConfig
+    attributes:
+      olcOverlay: "{0}auditlog"
+      olcAuditlogFile: /var/log/ldapaudit.log
+
+  - dn: cn=module,cn=config
+    objectClass: olcModuleList
+    attributes:
+      cn: module
+      olcModulePath: /usr/lib64/openldap/
+      olcModuleLoad: memberof.la
+
+  - dn: olcOverlay={1}memberof,olcDatabase={2}hdb,cn=config
+    objectClass:
+      - olcConfig
+      - olcOverlayConfig
+      - olcMemberOf
+    attributes:
+      olcOverlay: "{1}memberof"
+
+  - dn: cn=module,cn=config
+    objectClass: olcModuleList
+    attributes:
+      cn: module
+      olcModulePath: /usr/lib64/openldap/
+      olcModuleLoad: unique.la
+
+  - dn: olcOverlay={2}unique,olcdatabase={2}hdb,cn=config
+    objectClass: 
+      - olcOverlayConfig
+      - olcUniqueConfig
+    attributes:
+      olcOverlay: "{2}unique"
+      olcUniqueURI: ldap:///?uid?sub?

@@ -189,3 +189,13 @@
   template:
     src: ldap_aliases.sh
     dest: /etc/profile.d/
+
+- name: add some entries
+  ldap_entry:
+    dn: "{{ item.dn }}"
+    objectClass: "{{ item.objectClass }}"
+    attributes: "{{ item.attributes }}"
+    state: present
+  loop: "{{ ldap_entries }}"
+  when: ldap_entries is defined
+  ignore_errors: true
