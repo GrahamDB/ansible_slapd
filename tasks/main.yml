@@ -141,9 +141,10 @@
     register: ldif_list
 
   - name: import ldif files
-    command: "ldapadd -c -y {{ ldap_secret_file }} -xD {{ ldap_admin_dn }} -f {{ item .path}}"
+    command: "ldapadd -c -y {{ ldap_secret_file }} -xD {{ ldap_admin_dn }} -f {{ item .path }}"
     with_items: "{{ ldif_list.files }}"
     ignore_errors: true
+
   when: ldap_ldif_files is defined
 
 - name: configure replication provider
